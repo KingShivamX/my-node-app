@@ -1,0 +1,52 @@
+version: 0.2
+
+# 'version: 0.2' is the current buildspec version. Always use 0.2.
+
+phases:
+  install:
+    # This phase runs first. Used to install tools, runtimes, dependencies.
+    runtime-versions:
+      nodejs: 18          # Tells CodeBuild to use Node.js version 18
+    commands:
+      - echo "=== INSTALL PHASE STARTED ==="
+      - echo "Installing Node dependencies..."
+      - npm install       # installs everything in package.json
+
+  pre_build:
+    # Runs BEFORE the actual build. Good for: login to ECR, run tests, set env vars
+    commands:
+      - echo "=== PRE-BUILD PHASE ==="
+      - echo "Running tests..."
+      - npm test          # runs your test script from package.json
+
+  build:
+    # THE MAIN BUILD PHASE. This is where you compile, bundle, zip your app.
+    commands:
+      - echo "=== BUILD PHASE ==="
+      - echo "Build started on `date`"
+      - echo "Build ID is $CODEBUILD_BUILD_NUMBER"
+      - zip -r app-$CODEBUILD_BUILD_NUMBER.zip . -x "*.git*"
+      # zip -r  → recursive zip (include all subfolders)
+      # app-$CODEBUILD_BUILD_NUMBER.zip → unique name per build (e.g. app-5.zip)
+      # . → zip everything in current folder
+      # -x "*.git*" → EXCLUDE the .git folder (we don't need git history in zip)
+
+  post_build:
+    # Runs AFTER build. Good for: push Docker images, send notifications, cleanup
+    commands:
+      - echo "=== POST-BUILD PHASE ==="
+      - echo "Build completed on `date`"
+
+artifacts:
+  # Artifacts = the OUTPUT of your build. What gets uploaded to S3.
+  files:
+    - '**/*'              # Upload ALL files and folders recursively
+    # You can also be specific: just upload the zip:
+    # - app-*.zip
+  name: app-$CODEBUILD_BUILD_NUMBER
+  # This sets the folder name inside your S3 bucket
+
+cache:
+  # Optional: Cache node_modules so next build is faster
+  paths:
+    - 'node_modules/**/*'
