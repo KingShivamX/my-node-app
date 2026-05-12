@@ -5,6 +5,10 @@ echo "=== STARTING SERVER ==="
 
 cd /var/www/html
 
+# Ensure nothing is still listening on 3000 (re-deploy, failed prior hook, etc.)
+pkill -f "node app.js" 2>/dev/null || true
+sleep 1
+
 # Install npm packages on the server
 npm install
 

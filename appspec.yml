@@ -32,15 +32,11 @@ hooks:
       timeout: 300
       runas: root
 
-  AfterInstall:
-    # Runs AFTER files are copied to server
-    # Good for: set permissions, configure the app, set env variables
-    - location: scripts/start_server.sh
-      timeout: 300
-      runas: root
+  # Do NOT run start_server.sh in AfterInstall AND ApplicationStart — that starts Node twice.
+  # First start binds :3000; second hits EADDRINUSE → log error → ValidateService / health can fail (HEALTH_CONSTRAINTS).
 
   ApplicationStart:
-    # Runs to START your new application
+    # Runs AFTER files are on the server — start the app once here
     - location: scripts/start_server.sh
       timeout: 300
       runas: root
