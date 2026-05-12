@@ -1,4 +1,6 @@
 #!/bin/bash
+# Start once per deploy (only referenced from ApplicationStart in appspec.yml)
+
 pkill -f "node app.js" 2>/dev/null || true
 sleep 1
 cd /var/www/html

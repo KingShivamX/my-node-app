@@ -1,22 +1,49 @@
 version: 0.0
+# version 0.0 is the ONLY valid value for EC2/on-premises deployments. Don't change it.
+
 os: linux
+# 'linux' or 'windows' — the OS of your EC2 instance
+
 files:
+  # This section says: copy files FROM the artifact TO the server
   - source: /
+    # source: / means "everything in the root of my artifact zip"
     destination: /var/www/html
+    # destination: where on the EC2 server to put the files
+    # Common destinations:
+    # /var/www/html → for web apps (Apache/Nginx)
+    # /home/ec2-user/app → for Node apps
+    # /opt/myapp → custom location
+
 hooks:
+  # Hooks = scripts that run at specific points during deployment
+  # ORDER OF HOOKS (top to bottom, this is the lifecycle):
+
   ApplicationStop:
+    # Runs FIRST — stop the currently running old application
     - location: scripts/stop_server.sh
-      timeout: 300
-      runas: root
+      timeout: 300      # max seconds this script can run (300 = 5 minutes)
+      runas: root       # run the script as this user
+
   BeforeInstall:
+    # Runs BEFORE files are copied to server
+    # Good for: cleanup old files, create directories, install system packages
     - location: scripts/install_dependencies.sh
       timeout: 300
       runas: root
+
+  # Do NOT run start_server.sh in AfterInstall AND ApplicationStart — that starts Node twice.
+  # First start binds :3000; second hits EADDRINUSE → log error → ValidateService / health can fail (HEALTH_CONSTRAINTS).
+
   ApplicationStart:
+    # Runs AFTER files are on the server — start the app once here
     - location: scripts/start_server.sh
       timeout: 300
       runas: root
+
   ValidateService:
+    # Runs LAST — verify that deployment was successful
+    # If this script exits with non-zero, CodeDeploy marks deployment as FAILED
     - location: scripts/validate_service.sh
       timeout: 300
       runas: root
