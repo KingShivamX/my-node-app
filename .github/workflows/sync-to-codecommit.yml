@@ -12,22 +12,19 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: us-east-1
 
-      - name: Install git-remote-codecommit
-        run: pip install git-remote-codecommit
+      - run: pip install git-remote-codecommit
 
-      - name: Push to CodeCommit (mirrors current branch to main)
+      - name: Push to CodeCommit
         run: |
-          git remote add codecommit codecommit::ap-south-1://my-node-app
+          git remote add codecommit codecommit::us-east-1://my-node-app
           git push codecommit HEAD:refs/heads/main
